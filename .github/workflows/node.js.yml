@@ -1,62 +1,51 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: Node.js CI
-
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
-
+    branches:
+      - main
 jobs:
   build:
     name: "Build and Test"
     permissions:
-    # Required to allow actions/checkout to clone the repository onto the runner
+      # Required to allow actions/checkout to clone the repository onto the runner
       contents: read
-    # Required to allow the vitest coverage action to write a comment into the pull request
+      # Required to allow the vitest coverage action to write a comment into the pull request
       pull-requests: write
-  # ... rest of the node.js.yml
-
-
     runs-on: ubuntu-latest
-
-    
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
-  test:
-    runs-on: ubuntu-latest
-    
-    permissions:
-      # Required to checkout the code
-      contents: read
-      # Required to put a comment into the pull-request
-      pull-requests: write
-
-    steps:
-    - uses: actions/checkout@v5
-    - name: Use Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: '22.x'
-    - name: 'Install Deps'
-      run: npm install
-    - name: 'Test'
-      run: npx vitest --coverage.enabled true
-    - name: 'Report Coverage'
-      # Set if: always() to also generate the report if tests are failing
-      # Only works if you set `reportOnFailure: true` in your vite config as specified above
-      if: always() 
-      uses:  davelosert/vitest-coverage-report-action@v2
+      - uses: actions/checkout@v5
+      - name: Use Node.js 
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22.x
+          cache: npm
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm run test
+      - uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          vite-config-path: vite.config.ts  
+  # test:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: read
+  #     pull-requests: write
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Install Node
+  #       uses: actions/setup-node@v6
+  #       with:
+  #         node-version: 20.x
+  #     - name: Install Deps
+  #       run: npm install
+  #     - name: Test
+  #       run: npx vitest --coverage.enabled true
+  #     - name: Report Coverage
+  #       if: always()
+  #       uses: davelosert/vitest-coverage-report-action@v2
 
   package-and-publish:
     needs:
@@ -98,7 +87,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=max  
+
+
   deploy-pages:
     name: Deploy to GitHub Pages
     needs: [ build ]
@@ -136,4 +127,4 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v4          
